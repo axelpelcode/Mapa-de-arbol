@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" href="./favicon.png" />
+        <link rel="stylesheet" href="./style.css" />
+        <title>Tree-map D3</title>
+    </head>
+    <body>
+        <!--Import D3 library-->
+        <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+        <!--FreeCodeCamp Test-->
+        <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+        <!--App with D3-->
+        <div id="app"></div>
+        <script>
+        //Request
+          const getData = async() => { 
+            const url = "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/video-game-sales-data.json";
+            const res = await fetch( url );
+            const Dataset =  await res.json();
+            return new Promise((resolve, reject) => {
+                resolve( Dataset );
+            })
+          };
+        //Titulos
+          d3.select( "#app" )
+          .append( "h2" )
+          .text( "Tree map D3" )
+          .attr( "id", "title" );
+          d3.select( "#app" )
+          .append( "h1" )
+          .text( "Video Game Sales: Top 100 Most Sold Video Games Grouped by Platform" )
+          .attr( "id", "description" )
+        //Canvas
+          const w = 1000;
+          const h = 600;
+          const svg = d3.select( "#app" )
+            .append( "svg" )
+            .attr( "id", "canvas" )
+            .attr( "width", w )
+            .attr( "height", h );
+        //Tooltip
+          const tooltip = d3.select("#app")
+            .append("div")
+            .attr("id", "tooltip")
+            .style("position", "absolute");
+        //Llamada al dataset
+          getData().then(( data )=> {
+        //Jerarquía
+            const jerarquia = d3.hierarchy( data, ( d )=> d.children)
+              .sum(( d )=> d.value )
+              .sort(( d1, d2 )=> { return d2.value - d1.value } );
+              console.log(jerarquia)
+        //Árbol
+            const treeMap = d3.treemap()
+              .size( [ w, h ] );
+            treeMap( jerarquia );
+        //Bloques
+            const color = [ 
+                "rgb(255, 0, 0)","rgb(255, 60, 0)","rgb(255, 174, 0)","rgb(0, 200, 255)",
+              "rgb(187, 255, 0)","rgb(0, 119, 255)","rgb(166, 0, 255)","rgb(255, 0, 98)",
+              "rgb(72, 255, 0)","rgb(0, 26, 255)","rgb(238, 0, 255)","rgb(6, 127, 67)",
+              "rgb(0, 255, 85)","rgb(89, 0, 255)","rgb(255, 0, 187)","rgb(6, 105, 127)",
+              "rgb(0, 255, 170)","rgb(75, 99, 39)" 
+            ];
+            const games = jerarquia.leaves();
+            console.log( games );
+            const bloque = svg.selectAll( "g" )
+              .data( games )
+              .enter()
+              .append( "g" )
+              .attr("class", "gs")
+              .attr("transform", ( game )=>  {
+                return "translate(" + game['x0'] + ", " + game['y0'] + ")"
+              });
+            bloque.append( "rect" )
+              .attr( "class", "tile" )
+              .attr( "fill", ( d )=> {
+                const consola = d.data.category;
+                switch( consola ){
+                  case "Wii":
+                    return color[0]
+                  break;
+                  case "DS":
+                    return color[1]
+                  break;
+                  case "X360":
+                    return color[2]
+                  break;
+                  case "GB":
+                    return color[3]
+                  break;
+                  case "PS3":
+                    return color[4]
+                  break;
+                  case "NES":
+                    return color[5]
+                  break;
+                  case "PS2":
+                    return color[6]
+                  break;
+                  case "3DS":
+                    return color[7]
+                  break;
+                  case "PS4":
+                    return color[8]
+                  break;
+                  case "SNES":
+                    return color[9]
+                  break;
+                  case "PS":
+                    return color[10]
+                  break;
+                  case "N64":
+                    return color[11]
+                  break;
+                  case "GBA":
+                    return color[12]
+                  break;
+                  case "XB":
+                    return color[13]
+                  break;
+                  case "PC":
+                    return color[14]
+                  break;
+                  case 2600:
+                    return color[15]
+                  break;
+                  case "PSP":
+                    return color[16]
+                  break;
+                  default:
+                    return color[17];
+                }
+              })
+              .attr( "data-name", ( d )=> d.data.name )
+              .attr( "data-category", ( d )=> d.data.category )
+              .attr( "data-value", ( d )=> d.data.value )
+              .attr( "width", ( d ) => {
+                return d.x1 - d.x0
+              })
+              .attr( "height", ( d ) => {
+                return d.y1 - d.y0
+              })
+              .on('mouseover',( m, d ) => { 
+                tooltip.transition()
+                .style("visibility", "visible")
+                .attr("data-value", d.data.value)
+                .text( d.data.name + " " + d.data.value )
+                .style("opacity", "0.8")
+                
+              })
+              .on('mouseout', () => tooltip.transition()
+              .style("visibility", "hidden")
+              .style("opacity", 0));
+            bloque.append("text")
+              .text(( d )=> d.data.name)
+              .attr("x", 5)
+              .attr("y", 20)
+              .style("font-size", "12px");
+            
+          });
+        </script>
+        <!--Legend-->
+          <svg id="legend" width="1000" height="40px">
+          <g>
+            <rect class="legend-item 0" x="0" y="0" width="40" heigth="40" fill="rgb(255, 0, 0)"></rect>
+            <text x="0" y="20" >Wii</text>
+          </g>
+          <g>
+            <rect class="legend-item 1" x="40" y="0" width="40" heigth="40" fill="rgb(255, 60, 0)"></rect>
+            <text x="40" y="20" >DS</text>
+          </g>
+          <g>
+            <rect class="legend-item 2" x="80" y="0" width="40" heigth="40" fill="rgb(255, 174, 0)"></rect>
+            <text x="80" y="20" >X360</text>
+          </g>
+          <g>
+            <rect class="legend-item 3" x="120" y="0" width="40" heigth="40" fill="rgb(0, 200, 255)"></rect>
+            <text x="120" y="20" >GB</text>
+          </g>
+          <g>
+            <rect class="legend-item 4" x="160" y="0" width="40" heigth="40" fill="rgb(187, 255, 0)"></rect>
+            <text x="160" y="20" >PS3</text>
+          </g>
+          <g>
+            <rect class="legend-item 5" x="200" y="0" width="40" heigth="40" fill="rgb(0, 119, 255)"></rect>
+            <text x="200" y="20" >NES</text>
+          </g>
+          <g>
+            <rect class="legend-item 6" x="240" y="0" width="40" heigth="40" fill="rgb(166, 0, 255)"></rect>
+            <text x="240" y="20" >PS2</text>
+          </g>
+          <g>
+            <rect class="legend-item 7" x="280" y="0" width="40" heigth="40" fill="rgb(255, 0, 98)"></rect>
+            <text x="280" y="20" >3DS</text>
+          </g>
+          <g>
+            <rect class="legend-item 8" x="320" y="0" width="40" heigth="40" fill="rgb(72, 255, 0)"></rect>
+            <text x="320" y="20" >PS4</text>
+          </g>
+          <g>
+            <rect class="legend-item 9" x="360" y="0" width="40" heigth="40" fill="rgb(0, 26, 255)"></rect>
+            <text x="360" y="20" >SNES</text>
+          </g>
+          <g>
+            <rect class="legend-item 10" x="400" y="0" width="40" heigth="40" fill="rgb(238, 0, 255)"></rect>
+            <text x="400" y="20" >PS</text>
+          </g>
+          <g>
+            <rect class="legend-item 11" x="440" y="0" width="40" heigth="40" fill="rgb(6, 127, 67)"></rect>
+            <text x="440" y="20" >N64</text>
+          </g>
+          <g>
+            <rect class="legend-item 12" x="480" y="0" width="40" heigth="40" fill="rgb(0, 255, 85)"></rect>
+            <text x="480" y="20" >GBA</text>
+          </g>
+          <g>
+            <rect class="legend-item 13" x="520" y="0" width="40" heigth="40" fill="rgb(89, 0, 255)"></rect>
+            <text x="520" y="20" >XB</text>
+          </g>
+          <g>
+            <rect class="legend-item 14" x="560" y="0" width="40" heigth="40" fill="rgb(255, 0, 187)"></rect>
+            <text x="560" y="20" >PC</text>
+          </g>
+          <g>
+            <rect class="legend-item 15" x="600" y="0" width="40" heigth="40" fill="rgb(6, 105, 127)"></rect>
+            <text x="600" y="20" >2600</text>
+          </g>
+          <g>
+            <rect class="legend-item 16" x="640" y="0" width="40" heigth="40" fill="rgb(0, 255, 170)"></rect>
+            <text x="640" y="20" >PSP</text>
+          </g>
+          <g>
+            <rect class="legend-item 17" x="680" y="0" width="40" heigth="40" fill="rgb(75, 99, 39)"></rect>
+            <text x="680" y="20" >XONE</text>
+          </g>
+          </svg>
+    </body>
+</html>
